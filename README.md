@@ -1,4 +1,4 @@
-HtmlFragmentHelper makes handling [HTML clipboard format](https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs.85).aspx) easy. It parses HTML clipboard metadata in the clipboard and separates it from the HTML source, and further parses the precise source that belongs to the selected html fragment in the clipboard. Each property is then easily accessible from a strongly typed view model, rather than losing them in a blob of text.
+HtmlFragmentHelper makes handling [Microsoft HTML clipboard format](https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs.85).aspx) easy in your .NET applications. Using C#, it parses HTML clipboard metadata in the clipboard and separates it from the HTML source, and further parses the precise source that belongs to the selected html fragment in the clipboard. Each property is then easily accessible from a strongly typed view model, rather than losing them in a blob of text.
 
 `HtmlFragmentViewModel` also includes a number of convenience methods and properties to make dealing with this data easy. For now, the details are in the source.
 
