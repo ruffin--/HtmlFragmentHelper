@@ -1,0 +1,5 @@
+C:\Projects\HtmlFragmentHelper\HtmlFragmentViewModel\bin\Debug\HtmlFragmentViewModel.dll
+C:\Projects\HtmlFragmentHelper\HtmlFragmentViewModel\bin\Debug\HtmlFragmentViewModel.pdb
+C:\Projects\HtmlFragmentHelper\HtmlFragmentViewModel\obj\Debug\HtmlFragmentViewModel.csprojResolveAssemblyReference.cache
+C:\Projects\HtmlFragmentHelper\HtmlFragmentViewModel\obj\Debug\HtmlFragmentViewModel.dll
+C:\Projects\HtmlFragmentHelper\HtmlFragmentViewModel\obj\Debug\HtmlFragmentViewModel.pdb
