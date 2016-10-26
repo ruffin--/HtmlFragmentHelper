@@ -5,11 +5,22 @@
 // ======================== EO LICENSE ===============================
 
 using System;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace HtmlFragmentHelper
 {
     public class HtmlFragmentViewModel
     {
+        public bool doStripColorStyleFromInlineHtml = true;
+        // TODO: This is going to zap a little too much, as we'll lose 
+        // image, repeat, attachment, and/or position if they're defined
+        // in the `background` "shortcut".
+        // https://www.w3.org/TR/CSS2/colors.html#background-properties
+        // (That is, I'm now removing most anything in not just `background-color`,
+        // but also `background` by itself)
+        private string _patternStripColorStyle = @"(background|(background-|border-)*color):[a-zA-Z0-9(), ]+;";
+
         public string Version = "";
         public int StartHtml = int.MinValue;
         public int EndHtml = int.MinValue;
@@ -68,7 +79,7 @@ namespace HtmlFragmentHelper
             }
         }
 
-        public string FragmentSourceParsed
+        public string HtmlSource
         {
             get
             {
@@ -82,7 +93,7 @@ namespace HtmlFragmentHelper
             string delimiterStartAfter = "<!--StartFragment-->";
             string delimiterEndBefore = "<!--EndFragment-->";
 
-            if (-1 < ret.IndexOf(delimiterStartAfter))
+            if (-1 < ret.IndexOf(delimiterStartAfter) && -1 < ret.IndexOf(delimiterEndBefore))
             {
                 ret = ret.Substring(ret.IndexOf(delimiterStartAfter) + delimiterStartAfter.Length);
                 if (-1 < ret.IndexOf(delimiterEndBefore))
@@ -95,15 +106,53 @@ namespace HtmlFragmentHelper
                 }
             }
 
+            if (this.doStripColorStyleFromInlineHtml)
+            {
+                ret = _parseColorStyleFromHtml(ret);
+            }
+
+            return ret;
+        }
+
+        private string _parseColorStyleFromHtml(string src)
+        {
+            string ret = string.Empty;
+            string[] astrTags = src.Split(new[] { '<' }, StringSplitOptions.RemoveEmptyEntries);
+            StringBuilder stringBuilder = new StringBuilder();
+
+            if (astrTags.Length > 0)
+            {
+                foreach (string tag in astrTags)
+                {
+                    if (tag.IndexOf('>') > -1)
+                    {
+                        string[] astrHalfs = tag.Split(new[] { '>' }, 2);
+                        astrHalfs[0] = Regex.Replace(astrHalfs[0], _patternStripColorStyle, " ");
+                        stringBuilder.Append('<').Append(astrHalfs[0]).Append('>').Append(astrHalfs[1]);
+                    }
+                    else
+                    {
+                        stringBuilder.Append('<').Append(tag);
+                    }
+                }
+                ret = stringBuilder.ToString();
+            }
+            else
+            {
+                ret = src;
+            }
+
             return ret;
         }
 
         public HtmlFragmentViewModel() { }
 
-        public HtmlFragmentViewModel(string rawClipboard)
+        public HtmlFragmentViewModel(string rawClipboard, bool stripColorFromHtmlSource = true)
         {
             try
             {
+                this.doStripColorStyleFromInlineHtml = stripColorFromHtmlSource;
+
                 //                                               Should always be lower-case, but just in case... Note that we force lower later.
                 string[] headAndTail = rawClipboard.Split(new[] { "<html", "<HTML" }, 2, StringSplitOptions.RemoveEmptyEntries);
 
@@ -193,7 +242,7 @@ SourceURL:https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs
             pass = pass && vm.StartFragment.Equals(232);
             pass = pass && vm.EndFragment.Equals(809);
             pass = pass && vm.SourceUrl.Equals("https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs.85).aspx");
-            pass = pass & vm.FragmentSourceParsed.Equals(@"<span style=""color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;, &quot;Lucida Grande&quot;, Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span>");
+            pass = pass & vm.HtmlSource.Equals(@"<span style=""color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;, &quot;Lucida Grande&quot;, Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span>");
             pass = pass & vm.SourceUrlDomainSecondAndTopLevelsOnly.Equals("microsoft.com");
 
             return pass;
