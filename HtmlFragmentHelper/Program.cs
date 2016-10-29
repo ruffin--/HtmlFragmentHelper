@@ -13,40 +13,41 @@ namespace HtmlFragmentHelper
     {
         static void Main(string[] args)
         {
-            HtmlFragmentViewModel vm1 = new HtmlFragmentViewModel(Program.ChromeFragment);
-            //Console.WriteLine(vm1.HtmlSource);
-
-            File.WriteAllText(@"C:\temp\withStrip.html", vm1.HtmlSource.Replace("<", "\n<"));
-
-
-            HtmlFragmentViewModel vm2 = new HtmlFragmentViewModel(Program.ChromeFragment, false);
-            //Console.WriteLine(vm2.HtmlSource);
-
-            File.WriteAllText(@"C:\temp\withoutStrip.html", vm2.HtmlSource.Replace("<", "\n<"));
-
-
-            HtmlFragmentViewModel vmEdge = new HtmlFragmentViewModel(Program.EdgeFragment, false);
-            Console.WriteLine(vmEdge.PageTitle ?? vmEdge.SourceUrlDomainSecondAndTopLevelsOnly);
-
-            HtmlFragmentViewModel vmChrome = new HtmlFragmentViewModel(Program.ChromeFragment, false);
-            Console.WriteLine(vmChrome.PageTitle ?? vmChrome.SourceUrlDomainSecondAndTopLevelsOnly);
-
-
-            //======================================================
-            #region A more real world use case
-            //======================================================
-            string strIntroLink = string.Empty;
-           
-            if (vmEdge.SourceUrl.Length > 0 && vmEdge.SourceUrlDomainSecondAndTopLevelsOnly.Length > 0)
+            try
             {
-                strIntroLink = string.Format("From <a href=\"{0}\">{1}</a>:" + Environment.NewLine + Environment.NewLine,
-                    vmEdge.SourceUrl, vmEdge.SourceUrlDomainSecondAndTopLevelsOnly);
-            }
+                Console.SetWindowSize(100, 40);
 
-            //Console.WriteLine(strIntroLink + vm.HtmlSource);
-            //======================================================
-            #endregion A more real world use case
-            //======================================================
+                //HtmlFragmentViewModel vmChromeStripColor1 = new HtmlFragmentViewModel(Program.ChromeFragment);
+                //File.WriteAllText(@"C:\temp\withStrip.html", vmChromeStripColor1.ClippedSource.Replace("<", "\n<"));
+                
+                //HtmlFragmentViewModel vmChromeNoStrip = new HtmlFragmentViewModel(Program.ChromeFragment, false);
+                //File.WriteAllText(@"C:\temp\withoutStrip.html", vmChromeNoStrip.ClippedSource.Replace("<", "\n<"));
+                
+                Program.TestSanity();
+                Program.TestTitle();
+
+                //======================================================
+                #region A more real world use case
+                //======================================================
+                HtmlFragmentViewModel vmEdge = new HtmlFragmentViewModel(EdgeFragment);
+                string strIntroLink = string.Empty;
+
+                if (vmEdge.SourceUrl.Length > 0 && vmEdge.SourceUrlDomainSecondAndTopLevelsOnly.Length > 0)
+                {
+                    strIntroLink = string.Format("From <a href=\"{0}\">{1}</a>:" + Environment.NewLine + Environment.NewLine,
+                        vmEdge.SourceUrl, vmEdge.SourceUrlDomainSecondAndTopLevelsOnly);
+                }
+
+                //Console.WriteLine(strIntroLink + vm.HtmlSource);
+                //======================================================
+                #endregion A more real world use case
+                //======================================================
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.ToString());
+            }
 
             Console.WriteLine();
             Console.WriteLine();
@@ -54,6 +55,60 @@ namespace HtmlFragmentHelper
             Console.WriteLine("Test finished. Press return to end.");
             Console.ReadLine();
         }
+
+        // Very basic unit test. You get the idea. Test away.
+        public static void TestSanity()
+        {
+            bool pass = true;
+            string testSource = @"Version:0.9
+StartHTML:0000000196
+EndHTML:0000000845
+StartFragment:0000000232
+EndFragment:0000000809
+SourceURL:https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs.85).aspx
+<html>
+<body>
+<!--StartFragment--><span style=""color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;, &quot;Lucida Grande&quot;, Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span><!--EndFragment-->
+</body>
+</html>";
+
+            HtmlFragmentViewModel vm = new HtmlFragmentViewModel(testSource, false);
+            pass = pass & vm.Version.Equals("0.9");
+            pass = pass && vm.StartHtml.Equals(196);
+            pass = pass && vm.EndHtml.Equals(845);
+            pass = pass && vm.StartFragment.Equals(232);
+            pass = pass && vm.EndFragment.Equals(809);
+            pass = pass && vm.SourceUrl.Equals("https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs.85).aspx");
+
+            // Note that if we had blank lines in here, they'd be removed on construction as currently written (20161029).
+            pass = pass && vm.ClippedSource.Equals(@"<span style=""color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;, &quot;Lucida Grande&quot;, Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span>");
+
+            string expectedHtml = @"<html>
+<body>
+<!--StartFragment--><span style=""color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;, &quot;Lucida Grande&quot;, Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span><!--EndFragment-->
+</body>
+</html>";
+            expectedHtml.NLWriteLine();
+            vm.HtmlSource.NLWriteLine();
+            pass = pass && vm.HtmlSource.Equals(expectedHtml);
+
+            pass = pass & vm.SourceUrlDomainSecondAndTopLevelsOnly.Equals("microsoft.com");
+
+            if (!pass) throw new Exception("TestSanity check test did not pass successfully.");
+        }
+
+        public static void TestTitle()
+        {
+            bool pass = true;
+            HtmlFragmentViewModel vmEdge = new HtmlFragmentViewModel(EdgeFragment);
+            HtmlFragmentViewModel vmChrome = new HtmlFragmentViewModel(ChromeFragment);
+
+            pass = pass && vmEdge.PageTitle.Equals("Daring Fireball: Walt Mossberg: ‘Why Does Siri Seem So Dumb?’");
+            pass = pass && vmChrome.PageTitle.Equals("daringfireball.net");
+
+            if (!pass) throw new Exception("TestTitle check did not pass successfully.");
+        }
+
 
         public static string EdgeFragment = @"Version:1.0
 StartHTML:000000210
@@ -195,5 +250,18 @@ EndFragment:0000002447
 </html>
 
 ";
+    }
+
+    public static class TestingExtensions
+    {
+        public static void NLWriteLine(this string toWrite, bool bookend = true)
+        {
+            if (bookend)
+            {
+                toWrite = "#" + toWrite + "#";
+            }
+
+            Console.WriteLine(toWrite.Replace("\r", "\\r\r").Replace("\n", "\n\\n") + "\n\n");
+        }
     }
 }

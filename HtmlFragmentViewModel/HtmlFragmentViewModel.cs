@@ -69,19 +69,20 @@ namespace HtmlFragmentHelper
         }
 
         public string FragmentSourceRaw = "";
+        public string HtmlSource = "";
 
-        public string HtmlSource
+        public string ClippedSource
         {
             get
             {
-                return _parseHtmlClipboardFragment(this.FragmentSourceRaw);
+                return _parseHtmlClipboardFragment(this.HtmlSource);
             }
         }
         public string PageTitle
         {
             get
             {
-                return this.FragmentSourceRaw.ExtractBetween("<title*>", "</title>");
+                return this.HtmlSource.ExtractBetween("<title*>", "</title>") ?? this.SourceUrlDomainSecondAndTopLevelsOnly;
             }
         }
 
@@ -102,13 +103,13 @@ namespace HtmlFragmentHelper
         }
         #endregion Construction Error Handling
 
-        private string _parseHtmlClipboardFragment(string rawFragmentSource)
+        private string _parseHtmlClipboardFragment(string clippedSource)
         {
-            string ret = rawFragmentSource;
+            string ret = clippedSource;
             string delimiterStartAfter = "<!--StartFragment-->";
             string delimiterEndBefore = "<!--EndFragment-->";
 
-            ret = rawFragmentSource.ExtractBetween(delimiterStartAfter, delimiterEndBefore) ?? string.Empty;
+            ret = clippedSource.ExtractBetween(delimiterStartAfter, delimiterEndBefore) ?? string.Empty;
 
             if (this.doStripColorStyleFromInlineHtml)
             {
@@ -157,104 +158,101 @@ namespace HtmlFragmentHelper
             {
                 this.doStripColorStyleFromInlineHtml = stripColorFromHtmlSource;
 
-                //                                               Should always be lower-case, but just in case... Note that we force lower later.
-                string[] headAndTail = rawClipboard.Split(new[] { "<html", "<HTML" }, 2, StringSplitOptions.RemoveEmptyEntries);
+                this.FragmentSourceRaw = rawClipboard;
+                string[] aLines = rawClipboard.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);   // I think it's okay to remove empties semantically, but aesthetically, maybe not best to remove all the ?
 
-                if (headAndTail.Length < 2)
+                int i = 0;
+                bool headerOver = false;
+                while (i < aLines.Length && !headerOver)
                 {
-                    this.FragmentSourceRaw = rawClipboard;
-                }
-                else
-                {
-                    this.FragmentSourceRaw = "<html" + headAndTail[1];  // TODO: Optionally normalize inline styles into classes to make this source more easily readable.
+                    string line = aLines[i];
+                    int colLoc = line.IndexOf(":");
 
-                    string[] aLines = headAndTail[0].Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (string line in aLines)
+                    if (colLoc > 5 && line.Length > colLoc)
                     {
-                        if (line.Length > 5 && line.Contains(":"))
+                        int intParseDummy = int.MinValue;
+                        string value = line.Split(new[] { ':' }, 2)[1];
+
+                        switch (line.Substring(0, 6).ToLower())
                         {
-                            int intParseDummy = int.MinValue;
-                            string value = line.Split(new[] { ':' }, 2)[1];
+                            case "versio":
+                                this.Version = value;
+                                break;
 
-                            switch (line.Substring(0, 6).ToLower())
-                            {
-                                case "versio":
-                                    this.Version = value;
-                                    break;
+                            case "starth":
+                                if (int.TryParse(value, out intParseDummy))
+                                    this.StartHtml = intParseDummy;
+                                break;
 
-                                case "starth":
-                                    if (int.TryParse(value, out intParseDummy))
-                                        this.StartHtml = intParseDummy;
-                                    break;
+                            case "endhtm":
+                                if (int.TryParse(value, out intParseDummy))
+                                    this.EndHtml = intParseDummy;
+                                break;
 
-                                case "endhtm":
-                                    if (int.TryParse(value, out intParseDummy))
-                                        this.EndHtml = intParseDummy;
-                                    break;
+                            case "startf":
+                                if (int.TryParse(value, out intParseDummy))
+                                    this.StartFragment = intParseDummy;
+                                break;
 
-                                case "startf":
-                                    if (int.TryParse(value, out intParseDummy))
-                                        this.StartFragment = intParseDummy;
-                                    break;
+                            case "endfra":
+                                if (int.TryParse(value, out intParseDummy))
+                                    this.EndFragment = intParseDummy;
+                                break;
 
-                                case "endfra":
-                                    if (int.TryParse(value, out intParseDummy))
-                                        this.EndFragment = intParseDummy;
-                                    break;
+                            case "source":
+                                this.SourceUrl = value;
+                                break;
 
-                                case "source":
-                                    this.SourceUrl = value;
-                                    break;
-
-                                default:
-                                    // Should consider throwing an error here to for ill-formatted clipboard.
-                                    break;
-
-                            }
+                            default:
+                                // If this is a header value we don't know about (say Version is > 1.0),
+                                // just skip it. Otherwise pretend we're in the HTML.
+                                if (!Regex.IsMatch(line, @"^[A-Za-z]+:"))
+                                {
+                                    headerOver = true;
+                                    i--;    // We'll need to back up one to process this line as html source since we're incrementing, below.
+                                }
+                                break;
                         }
-                        // else we should consider throwing an error for an ill-formatted HTML clipboard
+                        i++;
                     }
+                    else
+                    {
+                        headerOver = true;
+                    }
+                }   // while i < aLines.Length & !headerOver
+
+                StringBuilder sbClippedSource = new StringBuilder();  // MICRO OPTIMIZATION THEATER!!!
+                while (i < aLines.Length)
+                {
+                    sbClippedSource.Append(aLines[i]).Append("\r\n"); // Note that this normalizes line endings to '\r\n', like it or not.
+                    i++;
                 }
+
+                this.HtmlSource = sbClippedSource.ToString().TrimEnd('\r','\n');
             }
             catch (Exception e)
             {
                 this.FragmentSourceRaw = rawClipboard;
-                this.Error = e.Message;
+                this.Error += e.Message + "\n";
             }
-        }
-
-        // Very basic unit test. You get the idea. Test away.
-        public static bool SanityCheck()
-        {
-            bool pass = true;
-            string testSource = @"Version:0.9
-StartHTML:0000000196
-EndHTML:0000000845
-StartFragment:0000000232
-EndFragment:0000000809
-SourceURL:https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs.85).aspx
-<html>
-<body>
-<!--StartFragment--><span style=""color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;, &quot;Lucida Grande&quot;, Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span><!--EndFragment-->
-</body>
-</html>";
-
-            HtmlFragmentViewModel vm = new HtmlFragmentViewModel(testSource);
-            pass = pass & vm.Version.Equals("0.9");
-            pass = pass && vm.StartHtml.Equals(196);
-            pass = pass && vm.EndHtml.Equals(845);
-            pass = pass && vm.StartFragment.Equals(232);
-            pass = pass && vm.EndFragment.Equals(809);
-            pass = pass && vm.SourceUrl.Equals("https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs.85).aspx");
-            pass = pass & vm.HtmlSource.Equals(@"<span style=""color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;, &quot;Lucida Grande&quot;, Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span>");
-            pass = pass & vm.SourceUrlDomainSecondAndTopLevelsOnly.Equals("microsoft.com");
-
-            return pass;
         }
     }
 
     public static class HelperExtensions
     {
+        /// <summary>
+        /// Extension method that will parse a string, returning the characters
+        /// between `findAfterMarker` and `findBeforeMarker` as a string.
+        /// </summary>
+        /// <param name="str">The string upon which the extension method is being called.</param>
+        /// <param name="findAfterMarker">The string to find BEFORE the extraction value. (exclusive)
+        /// Wild-cards ARE supported. Use an asterisk to denote wild card areas. To escape
+        /// asterisks, put two "**" in a row. NOTE: "#$$#" will be translated as an escaped asterisk.
+        /// There is no escape value for "#$$#".</param>
+        /// <param name="findBeforeMarker">The string to find AFTER the extraction value (exclusive).
+        /// Wild-cards are NOT supported in the findBeforeMarker.</param>
+        /// <returns>null if the markers are not found or no characters exist between them, 
+        /// and the string between the two markers if they are, if any.</returns>
         public static string ExtractBetween(this string str,
             string findAfterMarker, string findBeforeMarker)
         {
