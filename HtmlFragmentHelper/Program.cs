@@ -14,54 +14,36 @@ namespace HtmlFragmentHelper
         static void Main(string[] args)
         {
             HtmlFragmentViewModel vm1 = new HtmlFragmentViewModel(Program.ChromeFragment);
-            Console.WriteLine(vm1.HtmlSource);
+            //Console.WriteLine(vm1.HtmlSource);
 
             File.WriteAllText(@"C:\temp\withStrip.html", vm1.HtmlSource.Replace("<", "\n<"));
 
 
             HtmlFragmentViewModel vm2 = new HtmlFragmentViewModel(Program.ChromeFragment, false);
-            Console.WriteLine(vm2.HtmlSource);
+            //Console.WriteLine(vm2.HtmlSource);
 
             File.WriteAllText(@"C:\temp\withoutStrip.html", vm2.HtmlSource.Replace("<", "\n<"));
 
 
+            HtmlFragmentViewModel vmEdge = new HtmlFragmentViewModel(Program.EdgeFragment, false);
+            Console.WriteLine(vmEdge.PageTitle ?? vmEdge.SourceUrlDomainSecondAndTopLevelsOnly);
 
-            // Quick parsing check with built-in SanityCheck method.
-            Console.WriteLine(HtmlFragmentViewModel.SanityCheck()
-                ? "Sanity Check Success"
-                : "Sanity Check Failure");
-            Console.WriteLine();
-            Console.WriteLine();
+            HtmlFragmentViewModel vmChrome = new HtmlFragmentViewModel(Program.ChromeFragment, false);
+            Console.WriteLine(vmChrome.PageTitle ?? vmChrome.SourceUrlDomainSecondAndTopLevelsOnly);
+
 
             //======================================================
             #region A more real world use case
             //======================================================
-
-            string edgeFormatFragment = @"Version:0.9
-StartHTML:0000000143
-EndHTML:0000002756
-StartFragment:0000000179
-EndFragment:0000002720
-SourceURL:http://daringfireball.net/
-<html>
-<body>
-<!--StartFragment--><dt style=""font-family: &quot;Gill Sans MT&quot;, &quot;Gill Sans&quot;, &quot;Gill Sans Std&quot;, Verdana, &quot;Bitstream Vera Sans&quot;, sans-serif; font-size: 1.05em; text-align: left; font-weight: normal; margin: 2em 0px 1em; letter-spacing: 0.15em; text-transform: uppercase; color: rgb(238, 238, 238); font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; orphans: 2; text-indent: 0px; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(74, 82, 90);""><a href=""http://www.newyorker.com/business/currency/apple-samsung-and-good-design-inside-and-out"" style=""text-decoration: none; color: rgb(204, 204, 204); border-color: rgb(114, 118, 122); border-width: 0px 0px 1px; border-style: dotted; padding: 2px 0px 0px; background-color: inherit;"">OM MALIK: ‘GOOD DESIGN — INSIDE AND OUT’</a> <a class=""permalink"" title=""Permanent link to ‘Om Malik: ‘Good Design — Inside and Out’’"" href=""http://daringfireball.net/linked/2016
-/10/24/om-new-yorker-design"" style=""text-decoration: none; color: rgb(96, 104, 112); border: 0px dotted rgb(114, 118, 122); padding: 3px 3px 3px 5px; background-color: inherit; margin-left: 0.5em; font-family: &quot;Hiragino Kaku Gothic Pro&quot;, Osaka, &quot;Zapf Dingbats&quot;;"">★</a></dt><dd style=""margin: auto auto 5em 0em; color: rgb(238, 238, 238); font-family: Verdana, &quot;Bitstream Vera Sans&quot;, sans-serif; font-size: 11px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(74, 82, 90);""><p style=""margin: 0px 0px 1.6em; padding: 0px;"">Om Malik, writing last week for The New Yorker:</p><blockquote style=""font-size: 1em; margin: 0px 1em 0px 0.25em; padding: 0px 0.75em 0px 1em; border-left: 1px solid rgb(119, 119, 119); border-right: 0px solid rgb(119, 119
-, 119); outline: 0px; vertical-align: baseline; background: transparent; color: rgb(221, 221, 221);""><p style=""margin: 0px 0px 1.6em; padding: 0px;"">When I asked John Maeda, the former president of the Rhode Island School of Design, why, then, people have turned on the design of the iPhone 7, he pointed out that perhaps these critics “seem to believe that there’s some as yet unimaginable transcendence that can happen in a small, palm-shaped, rectangular device.</p></blockquote></dd><!--EndFragment-->
-</body>
-</html>";
-
-
             string strIntroLink = string.Empty;
-            HtmlFragmentViewModel vm = new HtmlFragmentViewModel(edgeFormatFragment);
-
-            if (vm.SourceUrl.Length > 0 && vm.SourceUrlDomainSecondAndTopLevelsOnly.Length > 0)
+           
+            if (vmEdge.SourceUrl.Length > 0 && vmEdge.SourceUrlDomainSecondAndTopLevelsOnly.Length > 0)
             {
                 strIntroLink = string.Format("From <a href=\"{0}\">{1}</a>:" + Environment.NewLine + Environment.NewLine,
-                    vm.SourceUrl, vm.SourceUrlDomainSecondAndTopLevelsOnly);
+                    vmEdge.SourceUrl, vmEdge.SourceUrlDomainSecondAndTopLevelsOnly);
             }
 
-            Console.WriteLine(strIntroLink + vm.HtmlSource);
+            //Console.WriteLine(strIntroLink + vm.HtmlSource);
             //======================================================
             #endregion A more real world use case
             //======================================================

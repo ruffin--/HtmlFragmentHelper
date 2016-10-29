@@ -70,15 +70,6 @@ namespace HtmlFragmentHelper
 
         public string FragmentSourceRaw = "";
 
-        public string Error = "";
-        public bool HasErrors
-        {
-            get
-            {
-                return !string.IsNullOrEmpty(this.Error);
-            }
-        }
-
         public string HtmlSource
         {
             get
@@ -86,6 +77,30 @@ namespace HtmlFragmentHelper
                 return _parseHtmlClipboardFragment(this.FragmentSourceRaw);
             }
         }
+        public string PageTitle
+        {
+            get
+            {
+                return this.FragmentSourceRaw.ExtractBetween("<title*>", "</title>");
+            }
+        }
+
+        #region Construction Error Handling
+        /// <summary>
+        /// Will hold the Message from any Exceptions thrown during constructor execution.
+        /// </summary>
+        public string Error = "";
+        /// <summary>
+        /// Convenience boolean to see if `Error` IsNullOrEmpty or not.
+        /// </summary>
+        public bool HasErrors
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(this.Error);
+            }
+        }
+        #endregion Construction Error Handling
 
         private string _parseHtmlClipboardFragment(string rawFragmentSource)
         {
@@ -93,18 +108,7 @@ namespace HtmlFragmentHelper
             string delimiterStartAfter = "<!--StartFragment-->";
             string delimiterEndBefore = "<!--EndFragment-->";
 
-            if (-1 < ret.IndexOf(delimiterStartAfter) && -1 < ret.IndexOf(delimiterEndBefore))
-            {
-                ret = ret.Substring(ret.IndexOf(delimiterStartAfter) + delimiterStartAfter.Length);
-                if (-1 < ret.IndexOf(delimiterEndBefore))
-                {
-                    ret = ret.Substring(0, ret.IndexOf(delimiterEndBefore));
-                }
-                else
-                {
-                    ret = string.Empty;  // No luck, Ending not after Start; go back to nothing.
-                }
-            }
+            ret = rawFragmentSource.ExtractBetween(delimiterStartAfter, delimiterEndBefore) ?? string.Empty;
 
             if (this.doStripColorStyleFromInlineHtml)
             {
@@ -246,6 +250,38 @@ SourceURL:https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs
             pass = pass & vm.SourceUrlDomainSecondAndTopLevelsOnly.Equals("microsoft.com");
 
             return pass;
+        }
+    }
+
+    public static class HelperExtensions
+    {
+        public static string ExtractBetween(this string str,
+            string findAfterMarker, string findBeforeMarker)
+        {
+            string ret = null;
+            int findAfterStartLoc = -1;
+
+            string[] astrFindAfters = findAfterMarker.Replace("**", "#$$#").Split(new[] { '*' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < astrFindAfters.Length; i++)
+            {
+                string strCurrentFind = astrFindAfters[i].Replace("#$$#", "*");
+                findAfterStartLoc = str.ToLower().IndexOf(strCurrentFind.ToLower());    // Case insensitive for now.
+                if (findAfterStartLoc < 0)
+                {
+                    break;
+                }
+                findAfterStartLoc += strCurrentFind.Length;
+                str = str.Substring(findAfterStartLoc);
+            }
+
+            int findBeforeStartLoc = str.ToLower().IndexOf(findBeforeMarker.ToLower());
+
+            if (-1 < findBeforeStartLoc)
+            {
+                ret = str.Substring(0, findBeforeStartLoc);
+            }
+
+            return ret;
         }
     }
 }
