@@ -13,7 +13,7 @@ namespace HtmlFragmentHelper
     public class HtmlFragmentViewModel
     {
         public bool doStripColorStyleFromInlineHtml = true;
-        // TODO: This is going to zap a little too much, as we'll lose 
+        // TODO: This is going to zap a little too much, as we'll lose
         // image, repeat, attachment, and/or position if they're defined
         // in the `background` "shortcut".
         // https://www.w3.org/TR/CSS2/colors.html#background-properties
@@ -122,32 +122,38 @@ namespace HtmlFragmentHelper
         private string _parseColorStyleFromHtml(string src)
         {
             string ret = string.Empty;
-            string[] astrTags = src.Split(new[] { '<' }, StringSplitOptions.RemoveEmptyEntries);
-            StringBuilder stringBuilder = new StringBuilder();
+            bool hasLeadingLt = false;
 
-            if (astrTags.Length > 0)
+            if (!string.IsNullOrEmpty(src))
             {
-                foreach (string tag in astrTags)
+                hasLeadingLt = src[0].Equals('<');
+                string[] astrTags = src.Split(new[] { '<' }, StringSplitOptions.RemoveEmptyEntries);
+                StringBuilder stringBuilder = new StringBuilder();
+
+                if (astrTags.Length > 0)
                 {
-                    if (tag.IndexOf('>') > -1)
+                    foreach (string tag in astrTags)
                     {
-                        string[] astrHalfs = tag.Split(new[] { '>' }, 2);
-                        astrHalfs[0] = Regex.Replace(astrHalfs[0], _patternStripColorStyle, " ");
-                        stringBuilder.Append('<').Append(astrHalfs[0]).Append('>').Append(astrHalfs[1]);
+                        if (tag.IndexOf('>') > -1)
+                        {
+                            string[] astrHalfs = tag.Split(new[] { '>' }, 2);
+                            astrHalfs[0] = Regex.Replace(astrHalfs[0], _patternStripColorStyle, " ");
+                            stringBuilder.Append('<').Append(astrHalfs[0]).Append('>').Append(astrHalfs[1]);
+                        }
+                        else
+                        {
+                            stringBuilder.Append('<').Append(tag);
+                        }
                     }
-                    else
-                    {
-                        stringBuilder.Append('<').Append(tag);
-                    }
+                    ret = stringBuilder.ToString();
                 }
-                ret = stringBuilder.ToString();
-            }
-            else
-            {
-                ret = src;
+                else
+                {
+                    ret = src;
+                }
             }
 
-            return ret;
+            return hasLeadingLt ? ret : ret.TrimStart('<');
         }
 
         public HtmlFragmentViewModel() { }
@@ -251,7 +257,7 @@ namespace HtmlFragmentHelper
         /// There is no escape value for "#$$#".</param>
         /// <param name="findBeforeMarker">The string to find AFTER the extraction value (exclusive).
         /// Wild-cards are NOT supported in the findBeforeMarker.</param>
-        /// <returns>null if the markers are not found or no characters exist between them, 
+        /// <returns>null if the markers are not found or no characters exist between them,
         /// and the string between the two markers if they are, if any.</returns>
         public static string ExtractBetween(this string str,
             string findAfterMarker, string findBeforeMarker)
