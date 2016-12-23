@@ -12,7 +12,13 @@ namespace HtmlFragmentHelper
 {
     public class HtmlFragmentViewModel
     {
+        // These are ugly globals so that we can use the `ClippedSource` property more easily.
+        // TODO: Though now that I'm thinking about it, I don't think we ever allow for a second
+        // parsing pass, so we should do this once and forget about it.
         public bool doStripColorStyleFromInlineHtml = true;
+        public bool doUnwrapMultilineHtmlTags = false;
+        private string _fragmentSourceRaw = "";
+
         // TODO: This is going to zap a little too much, as we'll lose
         // image, repeat, attachment, and/or position if they're defined
         // in the `background` "shortcut".
@@ -68,7 +74,6 @@ namespace HtmlFragmentHelper
             }
         }
 
-        public string FragmentSourceRaw = "";
         public string HtmlSource = "";
 
         public string ClippedSource
@@ -156,15 +161,31 @@ namespace HtmlFragmentHelper
             return hasLeadingLt ? ret : ret.TrimStart('<');
         }
 
-        public HtmlFragmentViewModel() { }
+        //public HtmlFragmentViewModel() { }
 
-        public HtmlFragmentViewModel(string rawClipboard, bool stripColorFromHtmlSource = true)
+        /// <summary>
+        /// This HtmlFragmentViewModel constructor takes in a string and, if it
+        /// is in Microsoft HTML clipboard format, will convert it to a
+        /// HtmlFragmentViewModel.
+        /// </summary>
+        /// <param name="rawClipboard">The Microsoft HTML clipboard formatted string to parse into a view model.</param>
+        /// <param name="stripColorFromHtmlSource">Keeping original inline color style in clipboards from Chrome
+        /// (in particular) can sometimes cause unexpected and difficult to read results. Setting `stripColorFromHhtmlSource`
+        /// to `true` (which is the default) will remove color, background-color, and border-color from inline style values.
+        /// `false` will keep all inline style unedited.</param>
+        /// <param name="unwrapHtmlTags">Multiline html tags are often valid, but may make further manipulation of the
+        /// clipboard text difficult or unwieldy (eg, putting into a Markdown blockquote format). So that inserts at the start
+        /// and end of lines doesn't break html, this can be set to `true` (default is `false`) to unwrap multiline html.</param>
+        public HtmlFragmentViewModel(string rawClipboard,
+            bool stripColorFromHtmlSource = true,
+            bool unwrapHtmlTags = false)
         {
             try
             {
                 this.doStripColorStyleFromInlineHtml = stripColorFromHtmlSource;
+                this.doUnwrapMultilineHtmlTags = unwrapHtmlTags;
 
-                this.FragmentSourceRaw = rawClipboard;
+                this._fragmentSourceRaw = rawClipboard;
                 string[] aLines = rawClipboard.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);   // I think it's okay to remove empties semantically, but aesthetically, maybe not best to remove all the ?
 
                 int i = 0;
@@ -212,7 +233,8 @@ namespace HtmlFragmentHelper
                             default:
                                 // If this is a header value we don't know about (say Version is > 1.0),
                                 // just skip it. Otherwise pretend we're in the HTML.
-                                if (!Regex.IsMatch(line, @"^[A-Za-z]+:"))
+                                // TODO: Seems fragile, even with duck typing by looking for <!--StartFragment-->.
+                                if (!Regex.IsMatch(line, @"^[A-Za-z]+:") || line.IndexOf("<!--StartFragment-->") > -1)
                                 {
                                     headerOver = true;
                                     i--;    // We'll need to back up one to process this line as html source since we're incrementing, below.
@@ -227,18 +249,22 @@ namespace HtmlFragmentHelper
                     }
                 }   // while i < aLines.Length & !headerOver
 
-                StringBuilder sbClippedSource = new StringBuilder();  // MICRO OPTIMIZATION THEATER!!!
+                StringBuilder sbClippedSource = new StringBuilder();    // MICRO OPTIMIZATION THEATER!!!
                 while (i < aLines.Length)
                 {
-                    sbClippedSource.Append(aLines[i]).Append("\r\n"); // Note that this normalizes line endings to '\r\n', like it or not.
+                    sbClippedSource.Append(aLines[i]).Append(System.Environment.NewLine);   // Side effect: Standardizes on environment newline.
                     i++;
                 }
 
                 this.HtmlSource = sbClippedSource.ToString().TrimEnd('\r','\n');
+                if (unwrapHtmlTags)
+                {
+                    this.HtmlSource = this.HtmlSource.UnwrapHtmlTags();
+                }
             }
             catch (Exception e)
             {
-                this.FragmentSourceRaw = rawClipboard;
+                this._fragmentSourceRaw = rawClipboard;
                 this.Error += e.Message + "\n";
             }
         }
