@@ -13,47 +13,64 @@ namespace HtmlFragmentHelper
     {
         static void Main(string[] args)
         {
-            try
+            Console.SetWindowSize(100, 40);
+
+            string response = "";
+
+            while (!response.Equals("."))
             {
-                Console.SetWindowSize(100, 40);
-
-                //HtmlFragmentViewModel vmChromeStripColor1 = new HtmlFragmentViewModel(Program.ChromeFragment);
-                //File.WriteAllText(@"C:\temp\withStrip.html", vmChromeStripColor1.ClippedSource.Replace("<", "\n<"));
-                
-                //HtmlFragmentViewModel vmChromeNoStrip = new HtmlFragmentViewModel(Program.ChromeFragment, false);
-                //File.WriteAllText(@"C:\temp\withoutStrip.html", vmChromeNoStrip.ClippedSource.Replace("<", "\n<"));
-                
-                Program.TestSanity();
-                Program.TestTitle();
-
-                //======================================================
-                #region A more real world use case
-                //======================================================
-                HtmlFragmentViewModel vmEdge = new HtmlFragmentViewModel(EdgeFragment);
-                string strIntroLink = string.Empty;
-
-                if (vmEdge.SourceUrl.Length > 0 && vmEdge.SourceUrlDomainSecondAndTopLevelsOnly.Length > 0)
+                try
                 {
-                    strIntroLink = string.Format("From <a href=\"{0}\">{1}</a>:" + Environment.NewLine + Environment.NewLine,
-                        vmEdge.SourceUrl, vmEdge.SourceUrlDomainSecondAndTopLevelsOnly);
+
+
+                    //HtmlFragmentViewModel vmChromeStripColor1 = new HtmlFragmentViewModel(Program.ChromeFragment);
+                    //File.WriteAllText(@"C:\temp\withStrip.html", vmChromeStripColor1.ClippedSource.Replace("<", "\n<"));
+
+                    //HtmlFragmentViewModel vmChromeNoStrip = new HtmlFragmentViewModel(Program.ChromeFragment, false);
+                    //File.WriteAllText(@"C:\temp\withoutStrip.html", vmChromeNoStrip.ClippedSource.Replace("<", "\n<"));
+
+                    //Program.TestSanity();
+                    //Program.TestTitle();
+                    Program.TestClassNormalization();
+
+                    //======================================================
+                    #region A more real world use case
+                    //======================================================
+                    //HtmlFragmentViewModel vmEdge = new HtmlFragmentViewModel(EdgeFragment);
+                    //string strIntroLink = string.Empty;
+
+                    //if (vmEdge.SourceUrl.Length > 0 && vmEdge.SourceUrlDomainSecondAndTopLevelsOnly.Length > 0)
+                    //{
+                    //    strIntroLink = string.Format("From <a href=\"{0}\">{1}</a>:" + Environment.NewLine + Environment.NewLine,
+                    //        vmEdge.SourceUrl, vmEdge.SourceUrlDomainSecondAndTopLevelsOnly);
+                    //}
+
+                    //Console.WriteLine(strIntroLink + vm.HtmlSource);
+                    //======================================================
+                    #endregion A more real world use case
+                    //======================================================
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error: " + ex.ToString());
                 }
 
-                //Console.WriteLine(strIntroLink + vm.HtmlSource);
-                //======================================================
-                #endregion A more real world use case
-                //======================================================
-
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine("======================================================");
+                Console.WriteLine("Test finished. Period on line by itself to end.");
+                Console.WriteLine("======================================================");
+                response = Console.ReadLine();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.ToString());
-            }
+        }
 
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine("======================================================");
-            Console.WriteLine("Test finished. Press return to end.");
-            Console.ReadLine();
+        public static void TestClassNormalization()
+        {
+            string stringToUse = Values.QuoteFail;
+            HtmlFragmentViewModel vm = new HtmlFragmentViewModel(stringToUse, true);
+
+            Console.WriteLine(vm.HtmlSource);
         }
 
         // Very basic unit test. You get the idea. Test away.
@@ -81,11 +98,11 @@ SourceURL:https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs
             pass = pass && vm.SourceUrl.Equals("https://msdn.microsoft.com/en-us/library/windows/desktop/ms649015(v=vs.85).aspx");
 
             // Note that if we had blank lines in here, they'd be removed on construction as currently written (20161029).
-            pass = pass && vm.ClippedSource.Equals(@"<span style=""color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;, &quot;Lucida Grande&quot;, Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span>");
+            pass = pass && vm.ClippedSource.Equals(@"<span style=""color: rgb(69, 69, 69); font-family: 'Segoe UI', 'Lucida Grande', Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span>");
 
             string expectedHtml = @"<html>
 <body>
-<!--StartFragment--><span style=""color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;, &quot;Lucida Grande&quot;, Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span><!--EndFragment-->
+<!--StartFragment--><span style=""color: rgb(69, 69, 69); font-family: 'Segoe UI', 'Lucida Grande', Verdana, Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none;"">The official name of the clipboard (the string used by RegisterClipboardFormat) is HTML Format.</span><!--EndFragment-->
 </body>
 </html>";
             expectedHtml.NLWriteLine();
@@ -119,14 +136,14 @@ StartSelection:000002696
 EndSelection:000003496
 SourceURL:http://daringfireball.net/2016/10/mossberg_siri
 <!DOCTYPE HTML>
-<HTML lang=""en""><HEAD>       <!-- Open Graph [jive] --> <!-- 
+<HTML lang=""en""><HEAD>       <!-- Open Graph [jive] --> <!--
     <meta property=""og:site_name""   content=""Daring Fireball"" />
     <meta property=""og:title""       content=""Walt Mossberg: ‘Why Does Siri Seem So Dumb?’"" />
     <meta property=""og:url""         content=""http://daringfireball.net/2016/10/mossberg_siri"" />
     <meta property=""og:description"" content=""In addition to the engineering hurdles to actually make Siri much better, Apple also has to overcome a “boy who cried wolf” credibility problem."" />
     <meta property=""og:image""       content=""https://daringfireball.net/graphics/df-square-192"" />
     <meta property=""og:type""        content=""article"" />
- -->         <!-- Twitter Card [jive] -->                    <TITLE>Daring Fireball: Walt Mossberg: ‘Why Does Siri Seem So Dumb?’</TITLE>        <LINK href=""/graphics/apple-touch-icon.png"" rel=""apple-touch-icon-precomposed"">     <LINK href=""/graphics/favicon.ico?v=005"" rel=""shortcut icon"">   <LINK href=""/graphics/dfstar.svg"" rel=""mask-icon"" color=""#4a525a"">  <LINK href=""/css/fireball_screen.css?v1.7"" rel=""stylesheet"" type=""text/css"" media=""screen"">     <LINK href=""/css/ie_sucks.php"" rel=""stylesheet"" type=""text/css"" media=""screen"">     <LINK href=""/css/fireball_print.css?v01"" rel=""stylesheet"" type=""text/css"" media=""print"">    <LINK href=""/feeds/main"" rel=""alternate"" type=""application/atom+xml"">   
+ -->         <!-- Twitter Card [jive] -->                    <TITLE>Daring Fireball: Walt Mossberg: ‘Why Does Siri Seem So Dumb?’</TITLE>        <LINK href=""/graphics/apple-touch-icon.png"" rel=""apple-touch-icon-precomposed"">     <LINK href=""/graphics/favicon.ico?v=005"" rel=""shortcut icon"">   <LINK href=""/graphics/dfstar.svg"" rel=""mask-icon"" color=""#4a525a"">  <LINK href=""/css/fireball_screen.css?v1.7"" rel=""stylesheet"" type=""text/css"" media=""screen"">     <LINK href=""/css/ie_sucks.php"" rel=""stylesheet"" type=""text/css"" media=""screen"">     <LINK href=""/css/fireball_print.css?v01"" rel=""stylesheet"" type=""text/css"" media=""print"">    <LINK href=""/feeds/main"" rel=""alternate"" type=""application/atom+xml"">
 <SCRIPT src=""/mint/?js"" type=""text/javascript"" async=""""></SCRIPT>
 
 <SCRIPT src=""http://www.google-analytics.com/ga.js"" type=""text/javascript"" async=""""></SCRIPT>
@@ -134,7 +151,7 @@ SourceURL:http://daringfireball.net/2016/10/mossberg_siri
 <SCRIPT src=""/js/js-global/FancyZoom.js"" type=""text/javascript""></SCRIPT>
 
 <SCRIPT src=""/js/js-global/FancyZoomHTML.js"" type=""text/javascript""></SCRIPT>
-     <LINK title=""Home"" href=""/"" rel=""home"">     <LINK href=""http://df4.us/pfz"" rel=""shorturl"">  <LINK title=""Apple Responds to Dash Controversy"" href=""http://daringfireball.net/2016/10/apple_dash_controversy"" rel=""prev"">    
+     <LINK title=""Home"" href=""/"" rel=""home"">     <LINK href=""http://df4.us/pfz"" rel=""shorturl"">  <LINK title=""Apple Responds to Dash Controversy"" href=""http://daringfireball.net/2016/10/apple_dash_controversy"" rel=""prev"">
 <SCRIPT src=""http://daringfireball.net/mint/?record&amp;key=383950464d37374b39333637695970466458724e6779513431&amp;referer=&amp;resource=http%3A//daringfireball.net/2016/10/mossberg_siri&amp;resource_title=Daring%20Fireball%3A%20Walt%20Mossberg%3A%20%u2018Why%20Does%20Siri%20Seem%20So%20Dumb%3F%u2019&amp;resource_title_encoded=0&amp;window_width=1756&amp;window_height=921&amp;resolution=2438x1371&amp;flash_version=0&amp;1476397798179&amp;serve_js"" type=""text/javascript""></SCRIPT>
 </HEAD><BODY onload=""setupZoom()""><DIV id=""Box""><DIV id=""Main""><DIV class=""article""><!--StartFragment--><P>Mossberg:</P><BLOCKQUOTE><P>For instance, when I asked Siri on my Mac how long it would take me to get to work, it said it didn’t have my work address — even though the “me” contact card contains a work address and the same synced contact card on my iPhone allowed Siri to give me an answer.</P><P>Similarly, on my iPad, when I asked what my next appointment was, it said “Sorry, Walt, something’s wrong” — repeatedly, with slightly different wording, in multiple places on multiple days. But, using the same Apple calendar and data, Siri answered correctly on the iPhone.</P></BLOCKQUOTE><P>These sort of glaring inconsistencies are almost as bad as universal failures. The big problem Apple faces with Siri is that when people encounter these problems, <EM>they stop trying</EM>.</P><!--EndFragment--></DIV></DIV></DIV></BODY></HTML>";
 
