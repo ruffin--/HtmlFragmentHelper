@@ -13,8 +13,8 @@ namespace HtmlFragmentHelper
     public enum INLINE_STYLE_OPERATIONS
     {
         NONE = 0,
-        NOT_YET_IMPLEMENTED__CONSOLIDATE_STYLES_AND_REMOVE_COLORS = 1,
-        REMOVE_STYLES_AND_CLASSES = 2
+        NOT_YET_IMPLEMENTED__CONSOLIDATE_STYLES_AND_REMOVE_COLORS,
+        REMOVE_STYLES_AND_CLASSES
     }
 
     #region Constructor
@@ -131,6 +131,9 @@ namespace HtmlFragmentHelper
             }
             catch (Exception e)
             {
+                System.Diagnostics.Debug.WriteLine(e.ToString());
+                System.Diagnostics.Debugger.Break();
+
                 this._fragmentSourceRaw = rawClipboard;
                 this.Error += e.Message + "\n";
             }

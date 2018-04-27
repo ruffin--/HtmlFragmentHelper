@@ -31,7 +31,8 @@ namespace HtmlFragmentHelper
 
                     //Program.TestSanity();
                     //Program.TestTitle();
-                    Program.TestClassNormalization();
+                    //Program.TestClassNormalization();
+                    Program.TestBadSlashdotKnockout();
 
                     //======================================================
                     #region A more real world use case
@@ -63,6 +64,14 @@ namespace HtmlFragmentHelper
                 Console.WriteLine("======================================================");
                 response = Console.ReadLine();
             }
+        }
+
+        public static void TestBadSlashdotKnockout()
+        {
+            string stringToUse = Values.SlashdotFail;
+            HtmlFragmentViewModel vm = new HtmlFragmentViewModel(stringToUse, true);
+
+            Console.WriteLine(vm.HtmlSource);
         }
 
         public static void TestClassNormalization()
