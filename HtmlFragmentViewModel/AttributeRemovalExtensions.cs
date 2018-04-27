@@ -148,6 +148,8 @@ namespace HtmlFragmentHelper
             return ret;
         }
 
+        // NOTE: Empty attributes currently won't be touched.
+        // ie, `class=""` will remain if you're removing class.
         public static string RetrieveAttribute(this string str, string attributeName, bool withAssignment = false)
         {
             string ret = null;

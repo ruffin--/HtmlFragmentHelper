@@ -162,7 +162,7 @@ namespace HtmlFragmentHelper
                     break;
                 }
                 findAfterStartLoc += strCurrentFind.Length;
-                str = str.Substring(findAfterStartLoc);
+                str = str.Substring(findAfterStartLoc); // TODO: You could keep track of markers instead of making new strings every time, though I guess this is okay for smallish strings.
             }
 
             int findBeforeStartLoc = str.ToLower().IndexOf(findBeforeMarker.ToLower());

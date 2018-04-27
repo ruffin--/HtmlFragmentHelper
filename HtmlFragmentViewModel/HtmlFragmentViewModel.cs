@@ -193,6 +193,10 @@ namespace HtmlFragmentHelper
 
         public string HtmlSource = "";
 
+        /// <summary>
+        /// Provides only the text between &lt;!--StartFragment--> & &lt;!--EndFragment-->
+        /// in the HTML fragment, if any exists.
+        /// </summary>
         public string ClippedSource
         {
             get

@@ -68,9 +68,11 @@ namespace HtmlFragmentHelper
 
         public static void TestBadSlashdotKnockout()
         {
-            string stringToUse = Values.SlashdotFail;
+            string stringToUse = Values.SlashdotMoreFail;
             HtmlFragmentViewModel vm = new HtmlFragmentViewModel(stringToUse, true);
 
+            string stamp = DateTime.Now.ToString("yyyy-MM-dd_HHmmss.fff");
+            File.WriteAllText($@"C:\temp\htmlFrag_{stamp}.html", vm.ClippedSource);
             Console.WriteLine(vm.HtmlSource);
         }
 
