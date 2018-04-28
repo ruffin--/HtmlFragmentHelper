@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -18,6 +19,13 @@ namespace HtmlFragmentHelper
             return char.ToUpperInvariant(chrOrig).Equals(char.ToUpperInvariant(chrCompare));
         }
         #endregion char extensions
+
+        public static string NormalizeNewlineToCarriageReturn_(this string str)
+        {
+            str = str.Replace("\r\n", "\r");
+            str = str.Replace("\n", "\r");
+            return str;
+        }
 
         private static char[] _acCrLF = { '\n', '\r' };
 
@@ -175,65 +183,21 @@ namespace HtmlFragmentHelper
             return ret;
         }
 
-
-
-        public static Tuple<string, string> OperateOnInlineStyles(
-             this string str,
-             INLINE_STYLE_OPERATIONS operation = INLINE_STYLE_OPERATIONS.REMOVE_STYLES_AND_CLASSES
-        )
+        private static Tuple<bool, string, string> _RemoveAttribute(string tag, string attributeToRemove)
         {
-            string source = str;
-            string styles = string.Empty;
+            bool replace = false;
+            string attribute = null;
+            string cleanedTag = tag;
 
-            switch (operation)
+            attribute = tag.RetrieveAttribute(attributeToRemove, true);
+            while (attribute != null)
             {
-                case INLINE_STYLE_OPERATIONS.NONE:
-                    // No changes.
-                    break;
-
-                case INLINE_STYLE_OPERATIONS.NOT_YET_IMPLEMENTED__CONSOLIDATE_STYLES_AND_REMOVE_COLORS:
-                    _ConsolidateStylesAndRemoveColors(source);
-                    break;
-
-                case INLINE_STYLE_OPERATIONS.REMOVE_STYLES_AND_CLASSES:
-                    int lessThan = source.IndexOf('<');
-                    int greaterThan = -1 == lessThan
-                        ? -1
-                        : source.IndexOfNextUnescapedGreaterThan(lessThan);
-
-                    while (lessThan != -1 && greaterThan != -1)
-                    {
-                        string tagOriginal = source.Substring(lessThan, greaterThan - lessThan + 1);
-                        string tag = tagOriginal;
-                        bool replace = false;
-
-                        string[] attributesToRemove = { "style", "class", "data-bind" };
-
-                        foreach (string attributeName in attributesToRemove)
-                        {
-                            string attribute = tag.RetrieveAttribute(attributeName, true);
-                            while (attribute != null)
-                            {
-                                replace = true;
-                                tag = tag.Replace(attribute, "");
-                                attribute = tag.RetrieveAttribute(attributeName, true);
-                            }
-                        }
-
-                        if (replace)
-                        {
-                            source = source.Replace(tagOriginal, tag);
-                        }
-
-                        lessThan = source.IndexOf('<', lessThan + 1);
-                        if (-1 != lessThan) {
-                            greaterThan = source.IndexOfNextUnescapedGreaterThan(lessThan);
-                        }
-                    }
-                    break;
+                replace = true;
+                cleanedTag = cleanedTag.Replace(attribute, "");
+                attribute = cleanedTag.RetrieveAttribute(attributeToRemove, true);
             }
 
-            return new Tuple<string, string>(source, styles);
+            return new Tuple<bool, string, string>(replace, attribute, cleanedTag);
         }
 
         // TODO: This is going to zap a little too much, as we'll lose
@@ -243,50 +207,131 @@ namespace HtmlFragmentHelper
         // (That is, I'm now removing most anything in not just `background-color`,
         // but also `background`)
         private static string _PatternStripColorStyle = @"(background|(background-|border-)*color):[a-zA-Z0-9(), ]+;";
+        private static char[] _EitherQuote = { '"', '\'' };
 
-        private static Tuple<string, string> _ConsolidateStylesAndRemoveColors(
-             string str
-        )
+        public static string ReplaceFirst(this string str, string find, string replace)
         {
-            string ret = string.Empty;
-            bool hasLeadingLt = false;
+            Regex regex = new Regex(Regex.Escape(find));
+            var ret = regex.Replace(str, replace, 1);
+            return ret;
+        }
 
-            if (!string.IsNullOrEmpty(str))
+        private static Tuple<string, string> _HandleAttributes(string source, INLINE_STYLE_OPERATIONS operation)
+        {
+            long startTicks = DateTime.UtcNow.Ticks;
+            int classNum = 1;
+            Dictionary<string, string> cssAndClassNames = new Dictionary<string, string>();
+            string styleBlock = string.Empty;
+
+            int lessThan = source.IndexOf('<');
+            int greaterThan = -1 == lessThan
+                ? -1
+                : source.IndexOfNextUnescapedGreaterThan(lessThan);
+
+            while (lessThan != -1 && greaterThan != -1)
             {
-                str = str.UnescapeAnyEscapedQuotesInStyle();
+                string tagOriginal = source.Substring(lessThan, greaterThan - lessThan + 1);
+                string tag = tagOriginal;
 
-                hasLeadingLt = str[0].Equals('<');
-                string[] astrTags = str.Split(new[] { '<' }, StringSplitOptions.RemoveEmptyEntries);
-                StringBuilder stringBuilder = new StringBuilder();
+                bool replace = false;
 
-                if (astrTags.Length > 0)
+                string[] attributesToRemove = { "class", "data-bind", "style" };    // Style must be last, idiot, since you're inserting classes.
+                foreach (string attributeName in attributesToRemove)
                 {
-                    foreach (string tag in astrTags)
+                    string attribute = tag.RetrieveAttribute(attributeName, true);
+                    while (attribute != null)
                     {
-                        if (tag.IndexOfNextUnescapedGreaterThan(0) > -1)
-                        {
-                            string[] astrHalfs = tag.Split(new[] { '>' }, 2);
-                            astrHalfs[0] = Regex.Replace(astrHalfs[0], _PatternStripColorStyle, " ");
-                            stringBuilder.Append('<').Append(astrHalfs[0]).Append('>').Append(astrHalfs[1]);
+                        replace = true;
+                        string replaceVal = string.Empty;
+
+                        if (
+                                operation.Equals(INLINE_STYLE_OPERATIONS.CONSOLIDATE_STYLES_AND_REMOVE_COLORS)
+                                && attributeName.Equals("style")
+                        ) {
+                            string inAttributeDelimiter = attribute[attribute.IndexOfAny(_EitherQuote)].Equals('"')
+                                ? "'"
+                                : "\"";
+
+                            // Note that we have to clean any instances of &quot; or, strangely,
+                            // &amp;quot;, out of inline styles that are / double-quoted and replace with
+                            // single quotes. (Clipboards tend to return stuff like:
+                            //
+                            // style="color: rgb(69, 69, 69); font-family: &quot;Segoe UI&quot;;"
+                            // or
+                            // font-family: &amp;quot;Source Sans Pro&amp;quot;,&amp;quot;Helvetica Neue&amp;quot;
+                            // for some reason.)
+                            var attrStripped = Regex.Replace(attribute, _PatternStripColorStyle, " ")
+                                .Replace("&quot;", inAttributeDelimiter).Replace("&amp;quot;", inAttributeDelimiter)
+                                .UnescapeAnyEscapedQuotesInStyle()
+                                .Substring(attribute.IndexOfAny(_EitherQuote))
+                                .Trim(_EitherQuote);
+
+                            string className = null;
+
+                            if (!cssAndClassNames.TryGetValue(attrStripped, out className))
+                            {
+                                className = $"q{classNum++}_{startTicks}";
+                                cssAndClassNames.Add(attrStripped, className);
+                            }
+
+                            replaceVal = $@"class=""{className}""";
                         }
-                        else
-                        {
-                            stringBuilder.Append('<').Append(tag);
-                        }
+
+                        tag = tag.Replace(attribute, replaceVal);
+                        attribute = tag.RetrieveAttribute(attributeName, true);
                     }
-                    ret = stringBuilder.ToString();
                 }
-                else
+
+                if (replace)
                 {
-                    ret = str;
+                    source = source.ReplaceFirst(tagOriginal, tag);
+                }
+
+                lessThan = source.IndexOf('<', lessThan + 1);
+                if (-1 != lessThan)
+                {
+                    greaterThan = source.IndexOfNextUnescapedGreaterThan(lessThan);
                 }
             }
 
-            ret = hasLeadingLt ? ret : ret.TrimStart('<');
+            if (operation.Equals(INLINE_STYLE_OPERATIONS.CONSOLIDATE_STYLES_AND_REMOVE_COLORS) && cssAndClassNames.Any())
+            {
+                styleBlock = "<!-- This style block is linked to the html paste below it -->\r<style>\r";
+                foreach (var kvp in cssAndClassNames)
+                {
+                    styleBlock += $"    .{kvp.Value} {{{kvp.Key}}}\r";
+                }
+                styleBlock += "</style>\r";
+            }
+
+            return new Tuple<string, string>(source, styleBlock);
+        }
 
 
-            // TODO: Clean up old code and try to create classes for inline styles.
-            throw new NotImplementedException("Can't consolidate styles in html yet.");
+        public static Tuple<string, string> OperateOnInlineStyles(
+             this string str,
+             INLINE_STYLE_OPERATIONS operation = INLINE_STYLE_OPERATIONS.REMOVE_STYLES_AND_CLASSES
+        )
+        {
+            Tuple<string, string> ret = null;
+
+            switch (operation)
+            {
+                case INLINE_STYLE_OPERATIONS.NONE:
+                    // No changes.
+                    ret = new Tuple<string, string>(string.Empty, string.Empty);
+                    break;
+
+                case INLINE_STYLE_OPERATIONS.CONSOLIDATE_STYLES_AND_REMOVE_COLORS:
+                case INLINE_STYLE_OPERATIONS.REMOVE_STYLES_AND_CLASSES:
+                    ret = _HandleAttributes(str, operation);
+                    break;
+
+                default:
+                    throw new Exception("Inline style operation not supported: " + operation.ToString());
+            }
+
+            return ret;
         }
 
         /// <summary>

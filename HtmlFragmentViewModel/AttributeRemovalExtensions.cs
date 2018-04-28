@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 
 namespace HtmlFragmentHelper
 {
@@ -148,8 +147,6 @@ namespace HtmlFragmentHelper
             return ret;
         }
 
-        // NOTE: Empty attributes currently won't be touched.
-        // ie, `class=""` will remain if you're removing class.
         public static string RetrieveAttribute(this string str, string attributeName, bool withAssignment = false)
         {
             string ret = null;
@@ -167,7 +164,7 @@ namespace HtmlFragmentHelper
                 lookFor = match.Value;
             }
 
-            if (propStart > -1 && str.Length > propStart + lookFor.Length + 2)
+            if (propStart > -1 && str.Length > propStart + lookFor.Length + 1)
             {
                 char quote = lookFor[lookFor.Length - 1];
                 int propEnd = propStart + lookFor.Length;
@@ -176,7 +173,7 @@ namespace HtmlFragmentHelper
                 {
                     // HTML 4.01 and 5 say you can't escape a quote inside of a quoted string.
                     // So we should be able to safely use IndexOf here instead of IndexOfOutsideOfDelimiters[...]
-                    propEnd = str.IndexOf(quote, propEnd + 1) + 1;
+                    propEnd = str.IndexOf(quote, propEnd);
                 } while (!propEnd.Equals(0) && str[propEnd - 1].Equals('\\'));
 
                 if (!propEnd.Equals(0))
@@ -186,8 +183,8 @@ namespace HtmlFragmentHelper
                         : propStart + lookFor.Length;
 
                     int retEnd = withAssignment
-                        ? propEnd
-                        : propEnd - 1;
+                        ? propEnd + 1
+                        : propEnd;
 
                     ret = str.Substring(retStart, retEnd - retStart).Trim();
                 }

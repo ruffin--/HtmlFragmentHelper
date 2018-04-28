@@ -13,7 +13,7 @@ namespace HtmlFragmentHelper
     public enum INLINE_STYLE_OPERATIONS
     {
         NONE = 0,
-        NOT_YET_IMPLEMENTED__CONSOLIDATE_STYLES_AND_REMOVE_COLORS,
+        CONSOLIDATE_STYLES_AND_REMOVE_COLORS,
         REMOVE_STYLES_AND_CLASSES
     }
 
@@ -39,12 +39,13 @@ namespace HtmlFragmentHelper
         /// and end of lines doesn't break html, this can be set to `true` (default is `false`) to unwrap multiline html.</param>
         public HtmlFragmentViewModel(string rawClipboard,
             bool consolidateMutlilineHtmlTags = true,
-            INLINE_STYLE_OPERATIONS operationType = INLINE_STYLE_OPERATIONS.REMOVE_STYLES_AND_CLASSES)
+            INLINE_STYLE_OPERATIONS operationType = INLINE_STYLE_OPERATIONS.REMOVE_STYLES_AND_CLASSES,
+            string EOL = "\r\n")
         {
             try
             {
-                this._fragmentSourceRaw = rawClipboard;
-                string[] aLines = rawClipboard.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);   // I think it's okay to remove empties semantically, but aesthetically, maybe not best to remove all the ?
+                this._fragmentSourceRaw = rawClipboard.NormalizeNewlineToCarriageReturn_();
+                string[] aLines = rawClipboard.Split(new [] {'\r'}, StringSplitOptions.RemoveEmptyEntries);   // I think it's okay to remove empties semantically, but aesthetically, maybe not best to remove all the ?
 
                 int i = 0;
                 bool headerOver = false;
@@ -110,11 +111,11 @@ namespace HtmlFragmentHelper
                 StringBuilder sbClippedSource = new StringBuilder();    // MICRO OPTIMIZATION THEATER!!!
                 while (i < aLines.Length)
                 {
-                    sbClippedSource.Append(aLines[i]).Append(System.Environment.NewLine);   // Side effect: Standardizes on environment newline.
+                    sbClippedSource.Append(aLines[i]).Append(EOL);
                     i++;
                 }
 
-                this.HtmlSource = sbClippedSource.ToString().TrimEnd('\r', '\n');
+                this.HtmlSource = sbClippedSource.ToString().TrimEnd('\r');
                 if (consolidateMutlilineHtmlTags)
                 {
                     this.HtmlSource = this.HtmlSource.ConslidateMultilineHtmlTags();
@@ -128,6 +129,8 @@ namespace HtmlFragmentHelper
                     this.HtmlSource = this.HtmlSource.Replace("<!--StartFragment-->",
                         "<!--StartFragment-->" + Environment.NewLine + htmlAndClasses.Item2);
                 }
+
+                this.HtmlSource = this.HtmlSource.Replace("\r", EOL);
             }
             catch (Exception e)
             {

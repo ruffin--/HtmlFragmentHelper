@@ -32,6 +32,22 @@ namespace HtmlFragmentHelper
                     //Program.TestSanity();
                     //Program.TestTitle();
                     //Program.TestClassNormalization();
+
+                    string tag = @"<a href=""http://www.google.com"" class="""" style="""">";
+                    //Console.WriteLine(tag.RetrieveAttribute("class", true));
+                    //Console.WriteLine(tag.RetrieveAttribute("style", true));
+                    //Console.WriteLine(tag.RetrieveAttribute("class", false));
+                    //Console.WriteLine(tag.RetrieveAttribute("style", false));
+
+                    //tag = @"<span class=""topic"" style=""box-sizing: border-box; margin: 0px; padding: 0px; overflow: hidden; height: 40px; width: auto; position: absolute; top: 12px; right: 70px; max-width: 100px;"">";
+                    //Console.WriteLine(tag.RetrieveAttribute("class", true));
+                    //Console.WriteLine(tag.RetrieveAttribute("style", true));
+
+                    //tag = @"<span id=""title-99902227"" class=""story-title"" style=""box-sizing: border-box; margin: 0px; padding: 0px; left: 15px; position: relative; color: white;"">";
+                    //Console.WriteLine(tag.RetrieveAttribute("class", true));
+                    //Console.WriteLine(tag.RetrieveAttribute("style", true));
+
+
                     Program.TestBadSlashdotKnockout();
 
                     //======================================================
@@ -69,10 +85,10 @@ namespace HtmlFragmentHelper
         public static void TestBadSlashdotKnockout()
         {
             string stringToUse = Values.SlashdotMoreFail;
-            HtmlFragmentViewModel vm = new HtmlFragmentViewModel(stringToUse, true);
+            HtmlFragmentViewModel vm = new HtmlFragmentViewModel(stringToUse, true, INLINE_STYLE_OPERATIONS.CONSOLIDATE_STYLES_AND_REMOVE_COLORS);
 
             string stamp = DateTime.Now.ToString("yyyy-MM-dd_HHmmss.fff");
-            File.WriteAllText($@"C:\temp\htmlFrag_{stamp}.html", vm.ClippedSource);
+            File.WriteAllText($@"C:\temp\html\htmlFrag_{stamp}.html", vm.ClippedSource);
             Console.WriteLine(vm.HtmlSource);
         }
 
