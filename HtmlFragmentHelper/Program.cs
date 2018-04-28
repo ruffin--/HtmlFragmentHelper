@@ -88,7 +88,7 @@ namespace HtmlFragmentHelper
             HtmlFragmentViewModel vm = new HtmlFragmentViewModel(stringToUse, true, INLINE_STYLE_OPERATIONS.CONSOLIDATE_STYLES_AND_REMOVE_COLORS);
 
             string stamp = DateTime.Now.ToString("yyyy-MM-dd_HHmmss.fff");
-            File.WriteAllText($@"C:\temp\html\htmlFrag_{stamp}.html", vm.ClippedSource);
+            File.WriteAllText($@"C:\temp\html\htmlFrag_{stamp}.html", vm.StyleBlock + Environment.NewLine + vm.ClippedSource);
             Console.WriteLine(vm.HtmlSource);
         }
 

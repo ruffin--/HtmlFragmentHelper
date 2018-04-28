@@ -124,11 +124,9 @@ namespace HtmlFragmentHelper
                 var htmlAndClasses = this.HtmlSource.OperateOnInlineStyles(operationType);
 
                 this.HtmlSource = htmlAndClasses.Item1;
-                if (null != htmlAndClasses.Item2)
-                {
-                    this.HtmlSource = this.HtmlSource.Replace("<!--StartFragment-->",
-                        "<!--StartFragment-->" + Environment.NewLine + htmlAndClasses.Item2);
-                }
+                this.StyleBlock = null == htmlAndClasses.Item2
+                    ? string.Empty
+                    : htmlAndClasses.Item2;
 
                 this.HtmlSource = this.HtmlSource.Replace("\r", EOL);
             }
@@ -153,6 +151,9 @@ namespace HtmlFragmentHelper
         public int StartFragment = int.MinValue;
         public int EndFragment = int.MinValue;
         public string SourceUrl = "";
+
+        public string StyleBlock = "";
+
         public string SourceUrlDomain
         {
             get
