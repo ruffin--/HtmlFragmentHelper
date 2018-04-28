@@ -296,7 +296,7 @@ namespace HtmlFragmentHelper
 
             if (operation.Equals(INLINE_STYLE_OPERATIONS.CONSOLIDATE_STYLES_AND_REMOVE_COLORS) && cssAndClassNames.Any())
             {
-                styleBlock = "<!-- This style block is linked to the html paste below it -->\r<style>\r";
+                styleBlock = "<style>\r";
                 foreach (var kvp in cssAndClassNames)
                 {
                     styleBlock += $"    .{kvp.Value} {{{kvp.Key}}}\r";
