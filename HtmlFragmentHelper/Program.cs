@@ -21,7 +21,14 @@ namespace HtmlFragmentHelper
             {
                 try
                 {
-
+                    HtmlFragmentViewModel pixelate = new HtmlFragmentViewModel(Values.Pixelating, true, INLINE_STYLE_OPERATIONS.CONSOLIDATE_STYLES_AND_REMOVE_COLORS);
+                    Console.WriteLine(pixelate.StyleBlock);
+                    Console.WriteLine(pixelate.HtmlSource);
+                    Console.WriteLine("");
+                    Console.WriteLine("");
+                    Console.WriteLine("================================");
+                    Console.WriteLine("");
+                    Console.WriteLine("");
 
                     //HtmlFragmentViewModel vmChromeStripColor1 = new HtmlFragmentViewModel(Program.ChromeFragment);
                     //File.WriteAllText(@"C:\temp\withStrip.html", vmChromeStripColor1.ClippedSource.Replace("<", "\n<"));
@@ -48,7 +55,7 @@ namespace HtmlFragmentHelper
                     //Console.WriteLine(tag.RetrieveAttribute("style", true));
 
 
-                    Program.TestBadSlashdotKnockout();
+                    //Program.TestBadSlashdotKnockout();
 
                     //======================================================
                     #region A more real world use case

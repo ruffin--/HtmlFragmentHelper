@@ -44,8 +44,8 @@ namespace HtmlFragmentHelper
         {
             try
             {
-                this._fragmentSourceRaw = rawClipboard.NormalizeNewlineToCarriageReturn_();
-                string[] aLines = rawClipboard.Split(new [] {'\r'}, StringSplitOptions.RemoveEmptyEntries);   // I think it's okay to remove empties semantically, but aesthetically, maybe not best to remove all the ?
+                _fragmentSourceRaw = rawClipboard.NormalizeNewlineToCarriageReturn_();
+                string[] aLines = _fragmentSourceRaw.Split(new [] {'\r'}, StringSplitOptions.RemoveEmptyEntries);   // I think it's okay to remove empties semantically, but aesthetically, maybe not best to remove all the ?
 
                 int i = 0;
                 bool headerOver = false;
@@ -111,7 +111,7 @@ namespace HtmlFragmentHelper
                 StringBuilder sbClippedSource = new StringBuilder();    // MICRO OPTIMIZATION THEATER!!!
                 while (i < aLines.Length)
                 {
-                    sbClippedSource.Append(aLines[i]).Append(EOL);
+                    sbClippedSource.Append(aLines[i]).Append('\r');
                     i++;
                 }
 
@@ -126,7 +126,7 @@ namespace HtmlFragmentHelper
                 this.HtmlSource = htmlAndClasses.Item1;
                 this.StyleBlock = null == htmlAndClasses.Item2
                     ? string.Empty
-                    : htmlAndClasses.Item2;
+                    : htmlAndClasses.Item2.Replace("\r", EOL);
 
                 this.HtmlSource = this.HtmlSource.Replace("\r", EOL);
             }
