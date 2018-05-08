@@ -40,6 +40,7 @@
   <ItemGroup>
     <Compile Include="AttributeRemovalExtensions.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HtmlFragmentViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
