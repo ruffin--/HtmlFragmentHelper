@@ -124,11 +124,13 @@ namespace HtmlFragmentHelper
                 var htmlAndClasses = this.HtmlSource.OperateOnInlineStyles(operationType);
 
                 this.HtmlSource = htmlAndClasses.Item1;
-                this.StyleBlock = null == htmlAndClasses.Item2
-                    ? string.Empty
-                    : htmlAndClasses.Item2.Replace("\r", EOL);
+                this.StyleBlock = htmlAndClasses.Item2 ?? string.Empty;
 
-                this.HtmlSource = this.HtmlSource.Replace("\r", EOL);
+                if (!EOL.Equals("\r"))
+                {
+                    this.HtmlSource = this.HtmlSource.Replace("\r", EOL);
+                    this.StyleBlock.Replace("\r", EOL);
+                }
             }
             catch (Exception e)
             {
