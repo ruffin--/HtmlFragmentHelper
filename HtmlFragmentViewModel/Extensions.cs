@@ -206,7 +206,7 @@ namespace HtmlFragmentHelper
         // https://www.w3.org/TR/CSS2/colors.html#background-properties
         // (That is, I'm now removing most anything in not just `background-color`,
         // but also `background`)
-        private static string _PatternStripColorStyle = @"(background|(background-|border-)*color):[a-zA-Z0-9(), ]+;";
+        private static string _PatternStripColorStyle = @"(background|(background-|border-)*color):[a-zA-Z0-9(), ]+;?";
         private static char[] _EitherQuote = { '"', '\'' };
 
         public static string ReplaceFirst(this string str, string find, string replace)
@@ -266,15 +266,18 @@ namespace HtmlFragmentHelper
                                 .Substring(attribute.IndexOfAny(_EitherQuote))
                                 .Trim(_EitherQuote);
 
-                            string className = null;
-
-                            if (!cssAndClassNames.TryGetValue(attrStripped, out className))
+                            if (!string.IsNullOrWhiteSpace(attrStripped))
                             {
-                                className = $"q{classNum++}_{startTicks}";
-                                cssAndClassNames.Add(attrStripped, className);
-                            }
+                                string className = null;
 
-                            replaceVal = $@"class=""{className}""";
+                                if (!cssAndClassNames.TryGetValue(attrStripped, out className))
+                                {
+                                    className = $"q{classNum++}_{startTicks}";
+                                    cssAndClassNames.Add(attrStripped, className);
+                                }
+
+                                replaceVal = $@"class=""{className}""";
+                            }
                         }
 
                         tag = tag.Replace(attribute, replaceVal);
