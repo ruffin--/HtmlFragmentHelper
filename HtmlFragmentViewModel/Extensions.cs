@@ -322,7 +322,7 @@ namespace HtmlFragmentHelper
             {
                 case INLINE_STYLE_OPERATIONS.NONE:
                     // No changes.
-                    ret = new Tuple<string, string>(string.Empty, string.Empty);
+                    ret = new Tuple<string, string>(str, string.Empty);
                     break;
 
                 case INLINE_STYLE_OPERATIONS.CONSOLIDATE_STYLES_AND_REMOVE_COLORS:
