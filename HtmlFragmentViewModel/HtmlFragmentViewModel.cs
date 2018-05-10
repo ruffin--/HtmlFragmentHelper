@@ -52,7 +52,7 @@ namespace HtmlFragmentHelper
                 while (i < aLines.Length && !headerOver)
                 {
                     string line = aLines[i];
-                    int colLoc = line.IndexOf(":");
+                    int colLoc = line.IndexOf(':');
 
                     if (colLoc > 5 && line.Length > colLoc)
                     {
@@ -115,7 +115,7 @@ namespace HtmlFragmentHelper
                     i++;
                 }
 
-                this.HtmlSource = sbClippedSource.ToString().TrimEnd('\r');
+                this.HtmlSource = sbClippedSource.ToString().Trim();
                 if (consolidateMutlilineHtmlTags)
                 {
                     this.HtmlSource = this.HtmlSource.ConslidateMultilineHtmlTags();
@@ -213,7 +213,7 @@ namespace HtmlFragmentHelper
 
                 return null == this.HtmlSource
                     ? string.Empty
-                    : this.HtmlSource.ExtractBetween(delimiterStartAfter, delimiterEndBefore) ?? string.Empty;
+                    : this.HtmlSource.ExtractBetween(delimiterStartAfter, delimiterEndBefore).Trim() ?? string.Empty;
             }
         }
         public string PageTitle
