@@ -213,7 +213,7 @@ namespace HtmlFragmentHelper
 
                 return null == this.HtmlSource
                     ? string.Empty
-                    : this.HtmlSource.ExtractBetween(delimiterStartAfter, delimiterEndBefore).Trim() ?? string.Empty;
+                    : this.HtmlSource.ExtractBetween(delimiterStartAfter, delimiterEndBefore)?.Trim() ?? string.Empty;
             }
         }
         public string PageTitle
